@@ -1,4 +1,5 @@
-import tables, x11/xlib
+import std/tables
+import x11/[x, xlib]
 
 type
   KeyMapping* = object
@@ -16,6 +17,7 @@ type
 
   Whim* = object
     dpy*: PDisplay
+    root*: Window
     keys*: Table[KeyMapping, Command]
 
 proc makeCommand*(name: string, args: seq[string]): Command =
