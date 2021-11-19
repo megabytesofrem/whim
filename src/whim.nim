@@ -7,7 +7,8 @@ import std/strformat, std/tables
 import x11/xlib, x11/x
 
 # types are in types.nim to avoid recursive includes
-import types, wmutils
+import whim/types, whim/wmutils
+import config
 
 var
   # Our window manager object
@@ -21,8 +22,7 @@ proc initWhim() =
 
   wm.keys = initTable[KeyMapping, Command]()
 
-  # Setup your keybinds here
-  wm.keys[makeKeyMapping(wm.dpy, "A", Mod1Mask)] = shell(@["echo", "hi"])
+  myConfig(wm)
 
   for key, command in wm.keys:
     grabKey(wm.dpy, key.code, key.modMask)
