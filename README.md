@@ -16,7 +16,7 @@ $ nimble testwm
 ```
 
 ### TODO
-- [] Add movement of windows
-- [] Somehow draw window decorations
-- [] Add support for tiling windows
-- [] Implement a small DSL/config file written in Nim?
+- [x] Implement a small DSL/config file written in Nim
+- [ ] Add movement of windows
+- [ ] Somehow draw window decorations
+- [ ] Add support for tiling windows (like i3)
