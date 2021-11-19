@@ -14,6 +14,9 @@ proc convertKey*(dpy: PDisplay, keystr: cstring): cint =
 
 proc getXKeycode*(dpy: PDisplay, sym: KeySym): KeyCode = XKeysymToKeycode(dpy, sym)
 
+#[
+  Wrapper functions around XGrabKey and XGrabButton
+]#
 proc grabKey*(dpy: PDisplay, code: int, modMask: int) =
   discard XGrabKey(
       dpy, 
@@ -24,8 +27,21 @@ proc grabKey*(dpy: PDisplay, code: int, modMask: int) =
       GrabModeAsync,
       GrabModeAsync)
 
-proc makeKeyMapping*(dpy: PDisplay, code: cstring, modMask: int): KeyMapping =
-  var key = cint(XKeysymToKeycode(dpy, XStringToKeysym(code)))
+proc grabButton*(dpy: PDisplay, button: int, modMask: int, buttonMask: int) = 
+  discard XGrabButton(
+      dpy,
+      cuint(button),
+      cuint(modMask),
+      DefaultRootWindow(dpy),
+      1,
+      cuint(buttonMask),
+      GrabModeAsync,
+      GrabModeAsync,
+      None,
+      None)
+
+proc makeKeyMapping*(dpy: PDisplay, keystr: cstring, modMask: int): KeyMapping =
+  var key = convertKey(dpy, keystr)
   KeyMapping(code: key, modMask: modMask)
 
 proc makeKeyMapping*(ev: XKeyEvent): KeyMapping = 

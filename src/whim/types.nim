@@ -8,10 +8,10 @@ type
   Command* = object
     # The command name. You can specify this if you want, or you can use
     # a wrapper function defined below to sweeten the syntax a bit
-    name: string
+    name*: string
 
     # Arguments for the command
-    args: seq[string]
+    args*: seq[string]
 
 
   Whim* = object
@@ -25,8 +25,5 @@ proc makeCommand*(name: string, args: seq[string]): Command =
   Aliases for makeCommand to sweeten the syntax a little
 ]#
 
-proc shell*(args: seq[string]): Command =
-  Command(name: "shell", args: args)
-
-proc raiseW*(): Command =
-  Command(name: "raiseW", args: @[])
+proc shell*(args: seq[string]): Command = makeCommand("shell", args)
+proc raiseW*(): Command = makeCommand("raiseW", @[])

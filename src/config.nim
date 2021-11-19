@@ -9,5 +9,5 @@ import std/tables
 
 proc myConfig*(wm: var Whim) =
   # Setup your keybinds here
-  wm.keys[makeKeyMapping(wm.dpy, "A", Mod1Mask)] = shell(@["echo", "hi"])
-  wm.keys[makeKeyMapping(wm.dpy, "B", Mod1Mask)] = shell(@["echo", "bye"])
+  wm.keys[makeKeyMapping(wm.dpy, "X", Mod1Mask)] = shell(@["xeyes"])
+  wm.keys[makeKeyMapping(wm.dpy, "T", Mod1Mask)] = shell(@["thunar"])

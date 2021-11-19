@@ -3,7 +3,12 @@
   Based off of https://github.com/mackstann/tinywm.
 ]#
 
-import std/strformat, std/tables
+import 
+  std/strformat,
+  std/tables, 
+  std/osproc
+
+from std/strutils import join
 import x11/xlib, x11/x
 
 # types are in types.nim to avoid recursive includes
@@ -21,28 +26,37 @@ proc initWhim() =
     quit "failed to open display"
 
   wm.keys = initTable[KeyMapping, Command]()
+  grabButton(wm.dpy, 1, None, ButtonPress or ButtonReleaseMask or PointerMotionMask)
+  grabButton(wm.dpy, 3, None, ButtonPress or ButtonReleaseMask or PointerMotionMask)
 
   myConfig(wm)
 
   for key, command in wm.keys:
     grabKey(wm.dpy, key.code, key.modMask)
+
+proc handleCommand(cmd: Command) =
+  case cmd.name:
+  of "shell": discard execCmd(cmd.args.join)
+  else: discard
   
 proc mainLoop() =
   var 
     ev: XEvent
-    keysym: KeySym
+    keymapping: KeyMapping
 
   while true:
     # Get the next event from X
     discard XNextEvent(wm.dpy, ev.addr)
 
-    if ev.theType == KeyPress:
-      echo fmt"key was pressed {ev.xkey.keycode}"
-
-      if wm.keys.hasKey(makeKeyMapping(ev.xkey)):
-        echo fmt"key was pressed {wm.keys[makeKeyMapping(ev.xkey)]}"  
-
-      #discard XRaiseWindow(wm.dpy, event.xkey.subwindow)
+    case ev.theType:
+    of KeyPress:
+      keymapping = makeKeyMapping(ev.xkey)
+      if wm.keys.hasKey(keymapping):
+        echo fmt"key was pressed {wm.keys[keymapping]}"
+        handleCommand(wm.keys[keymapping])
+    of ButtonPress:
+      echo "button was pressed"
+    else: discard
 
 when isMainModule:
   initWhim()
