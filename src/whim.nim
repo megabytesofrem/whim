@@ -6,10 +6,10 @@
 import std/[strformat, tables, osproc]
 
 from std/strutils import join
-import x11/[xlib, x, xutil]
+import x11/[xlib, x, keysym]
 
 # types are in types.nim to avoid recursive includes
-import whim/types, whim/wmutils
+import whim/[types, vector, wmutils]
 import config
 
 var
@@ -25,6 +25,7 @@ proc initWhim() =
   wm.root = XDefaultRootWindow(wm.dpy)
 
   wm.keys = initTable[KeyMapping, Command]()
+  wm.clients = initTable[Window, Window]()
 
   myConfig(wm)
   
@@ -42,6 +43,16 @@ proc onCreateNotify(ev: XCreateWindowEvent) =
 proc onReparentNotify(ev: XReparentEvent) =
   discard
 
+proc onMotionNotify(ev: XMotionEvent) =
+  let
+    frame = wm.clients[ev.window]
+    dragPos = initPosition(ev.xRoot, ev.yRoot)
+    delta: Vector2 = dragPos - wm.dragStartPos
+
+  if (ev.state and Button1Mask) == Button1Mask:
+    let dest = wm.dragStartFramePos + delta
+    discard XMoveWindow(wm.dpy, frame, cint(dest.x), cint(dest.y))
+
 proc onConfigureRequest(ev: XConfigureRequestEvent) =
   var changes: XWindowChanges
   # Copy fields from ev to changes
@@ -55,6 +66,36 @@ proc onConfigureRequest(ev: XConfigureRequestEvent) =
 
   # Configure the window using XConfigureWindow
   discard XConfigureWindow(wm.dpy, ev.window, cuint(ev.valueMask), changes.addr)
+
+proc onButtonPress(ev: XButtonPressedEvent) =
+  var
+    x: cint
+    y: cint
+    width: cuint
+    height: cuint
+    border: cuint
+    depth: cuint
+
+    frame: Window
+    root: Window
+
+  frame = wm.clients[ev.window]
+
+  # Save initial cursor position
+  wm.dragStartPos = initPosition(ev.xRoot, ev.yRoot)
+
+  # Save initial window information
+  discard XGetGeometry(
+      wm.dpy,
+      frame,
+      root.addr,
+      x.addr, y.addr,
+      width.addr, height.addr,
+      border.addr,
+      depth.addr)
+
+  wm.dragStartFramePos = initPosition(x, y)
+
 
 proc onMapRequest(ev: XMapRequestEvent) = 
   # Map the window so it is visible
@@ -82,6 +123,8 @@ proc mainLoop() =
       onCreateNotify(ev.xcreatewindow)
     of ReparentNotify:
       onReparentNotify(ev.xreparent)
+    of MotionNotify:
+      onMotionNotify(ev.xmotion)
 
     of ConfigureRequest:
       onConfigureRequest(ev.xconfigurerequest)
@@ -95,7 +138,7 @@ proc mainLoop() =
         echo fmt"key was pressed {wm.keys[keymapping]}"
         handleCommand(wm.keys[keymapping])
     of ButtonPress:
-      echo "button was pressed"
+      onButtonPress(ev.xbutton)
     else: discard
 
 when isMainModule:

@@ -4,9 +4,9 @@
 ]#
 
 import types
-import std/[strformat, macros]
+import std/[strformat, tables, macros]
 
-import x11/x, x11/xlib 
+import x11/[xlib, x, keysym]
 
 ## Helpful for debugging
 proc debugEvent*(ev: XEvent): string {.noSideEffect.} =
@@ -20,17 +20,12 @@ proc debugEvent*(ev: XEvent): string {.noSideEffect.} =
   of DestroyNotify: return "DestroyNotify"
   else: return &"Unknown event: {ev.theType}"
 
-# Utility functions
-proc convertKey*(wm: Whim, keystr: cstring): cint =
-  # Convert the key string into a XKeyCode
-  cint(XKeysymToKeycode(wm.dpy, XStringToKeysym(keystr)))
-
 proc getXKeycode*(wm: Whim, sym: KeySym): KeyCode = XKeysymToKeycode(wm.dpy, sym)
 
 #[
   Wrapper functions around XGrabKey and XGrabButton
 ]#
-proc grabKey*(wm: Whim, code: int, modMask: int) =
+proc grabKey*(wm: Whim, code: KeyCode, modMask: int) =
   discard XGrabKey(
       wm.dpy, 
       cint(code),
@@ -53,14 +48,14 @@ proc grabButton*(wm: Whim, w: Window, button: int, modMask: int, buttonMask: int
       None,
       None)
 
-proc frameWindow*(wm: Whim, w: Window) =
+proc frameWindow*(wm: var Whim, w: Window) =
   var 
     attrs: XWindowAttributes
   
   const 
-    BorderWidth = 5
+    BorderWidth = 10
     BorderColor = 0xff0000
-    BgColor = 0x0000ff
+    BgColor = 0xffffff
   
   # Retrieve attribute of window to frame
   discard XGetWindowAttributes(wm.dpy, w, attrs.addr)
@@ -90,13 +85,15 @@ proc frameWindow*(wm: Whim, w: Window) =
       frame,
       0, 0) # offset of client window within frame
 
-  # Map frame
-  discard XMapWindow(wm.dpy, frame)
 
   echo "framed window!"
+  wm.clients[w] = frame
+
+  # Map frame
+  discard XMapWindow(wm.dpy, frame)
 
   wm.grabButton(w, 1, Mod1Mask, ButtonPress or ButtonReleaseMask or ButtonMotionMask)
   wm.grabButton(w, 3, Mod1Mask, ButtonPress or ButtonReleaseMask or ButtonMotionMask)
 
 proc makeKeyMapping*(wm: Whim, ev: XKeyEvent): KeyMapping = 
-  KeyMapping(code: cint(ev.keycode), modMask: cast[int](ev.state))
+  KeyMapping(code: cuchar(ev.keycode), modMask: int(ev.state))
