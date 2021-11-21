@@ -33,4 +33,5 @@ proc initCommand*(name: string, args: seq[string]): Command =
 ]#
 
 proc shell*(args: seq[string]): Command = initCommand("shell", args)
+proc spawn*(args: seq[string]): Command = initCommand("spawn", args)
 proc raiseW*(): Command = initCommand("raiseW", @[])

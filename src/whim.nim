@@ -35,6 +35,11 @@ proc initWhim() =
 proc handleCommand(cmd: Command) =
   case cmd.name:
   of "shell": discard execCmd(cmd.args.join)
+  of "spawn": 
+    if cmd.args.len > 1:
+      discard execProcess(cmd.args[0], args=cmd.args[1..cmd.args.len], options={poUsePath})
+    else:
+      discard execProcess(cmd.args[0], options={poUsePath})
   else: discard
 
 proc onCreateNotify(ev: XCreateWindowEvent) = 
@@ -132,7 +137,7 @@ proc mainLoop() =
       onMapRequest(ev.xmaprequest)
 
     # Input events
-    of KeyPress:
+    of KeyRelease:
       keymapping = wm.makeKeyMapping(ev.xkey)
       if wm.keys.hasKey(keymapping):
         echo fmt"key was pressed {wm.keys[keymapping]}"

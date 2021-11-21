@@ -9,5 +9,6 @@ import std/tables
 
 proc myConfig*(wm: var Whim) =
   # Setup your keybinds here
-  keybind XK_e, Mod1Mask, shell(@["echo a"])
-  keybind XK_t, Mod1Mask, shell(@["echo b"])
+  keybind XK_e, Mod1Mask, shell(@["xeyes &"])
+  keybind XK_c, Mod1Mask, shell(@["galculator &"])
+  keybind XK_Return, Mod1Mask, shell(@["urxvt &"])

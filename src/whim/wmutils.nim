@@ -53,8 +53,8 @@ proc frameWindow*(wm: var Whim, w: Window) =
     attrs: XWindowAttributes
   
   const 
-    BorderWidth = 10
-    BorderColor = 0xff0000
+    BorderWidth = 3
+    BorderColor = 0x00ff00
     BgColor = 0xffffff
   
   # Retrieve attribute of window to frame
@@ -62,29 +62,44 @@ proc frameWindow*(wm: var Whim, w: Window) =
 
   # Create frame
   let frame = XCreateSimpleWindow(
-      wm.dpy,
-      wm.root,
-      attrs.x,
-      attrs.y,
-      attrs.width.cuint,
-      attrs.height.cuint,
-      BorderColor,
-      BorderWidth,
-      BgColor)
+      wm.dpy,                     # display
+      wm.root,                    # parent
+      attrs.x,                    # x
+      attrs.y,                    # y
+      attrs.width.cuint,          # width
+      attrs.height.cuint,         # height
+      BorderWidth,                # border size
+      BorderColor,                # border color
+      BgColor)                    # bg color
       
+  let decoration = XCreateSimpleWindow(
+      wm.dpy,                     # display
+      frame,                      # parent
+      0,                          # x
+      0,                          # y
+      attrs.width.cuint,          # width
+      15,                         # height
+      BorderWidth,                # border size
+      0x0000ff,                   # border color
+      0x0000ff)                   # bg color
+
   # Select events on the frame
   discard XSelectInput(wm.dpy, frame,
                        SubstructureNotifyMask or SubstructureRedirectMask)
 
   discard XAddToSaveSet(wm.dpy, w)
 
-  # Reparent client window
   discard XReparentWindow(
-      wm.dpy,
-      w,
-      frame,
-      0, 0) # offset of client window within frame
+      wm.dpy,           # display
+      decoration,       # child
+      frame,            # parent
+      0, 0)
 
+  discard XReparentWindow(
+      wm.dpy,           # display
+      w,                # child
+      frame,            # parent
+      0, 15) # offset of client window within frame
 
   echo "framed window!"
   wm.clients[w] = frame
