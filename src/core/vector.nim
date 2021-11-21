@@ -1,3 +1,7 @@
+##
+## Vector types
+## 
+
 type
   Vector2* = object
     x*: int
@@ -8,6 +12,7 @@ type
   Size* = Vector2
 
 ## Initializer
+
 proc initVector*(x: int, y: int): Vector2 {.noSideEffect.} =
   Vector2(x: x, y: y)
 
